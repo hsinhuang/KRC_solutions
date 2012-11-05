@@ -10,9 +10,8 @@ int trim(char s[]);
 
 int main(int argc, char const *argv[])
 {
-	int len;
 	char line[MAXLINE];
-	while((len = readline(line, MAXLINE)) > 0)
+	while(readline(line, MAXLINE) > 0)
 		if(trim(line) > 0)
 			printf("%s\n", line);
 
