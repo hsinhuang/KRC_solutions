@@ -8,7 +8,7 @@ double f2c(double fahr);
 
 int main(int argc, char const *argv[])
 {
-	int fahr, celsius;
+	int fahr;
 	for (fahr = LOWER; fahr <= UPPER; fahr += STEP) {
 		printf("%3d %6.1f\n", fahr, f2c(fahr));
 	}
