@@ -18,15 +18,16 @@ int main(int argc, char const *argv[])
 			putchar('*');
 		}
 		putchar('\n');
-		char *s = fold(line, LINEN);
-		printf("%s", s);
-		free((void*)s);
+		char *s;
 		while(len == MAXLINE - 1 && line[len - 2] != '\n'){
-			char *s = fold(line, LINEN);
+			s = fold(line, LINEN);
 			printf("%s", s);
 			free((void*)s);
 			len = readline(line, MAXLINE);
 		}
+		s = fold(line, LINEN);
+		printf("%s", s);
+		free((void*)s);
 	}
 	
 	return 0;
@@ -53,14 +54,24 @@ char* fold(char* str, int n){
 	while(oi < length){
 		// printf("%s\n", s);
 		t = copy(&str[oi], &s[si], n);// bias of '\0'
-		si += t - 1;
-		oi += t - 1;
-		while(s[--si] != ' ')
+		int ts = si, to = oi;
+		si += t - 1;// si is the index of first '\0'
+		oi += t - 1;// oi is the index of first not copied element
+		if(s[si] == '\n')
+			continue;
+		char c;
+		while((c = s[--si]) != ' ' && c != '\t')
 			--oi;
 		--oi;
-		while(s[--si] == ' ')
+		while((c = s[--si]) == ' ' || c == '\t')
 			--oi;
-		s[++si] = '\n';
+		if(si < ts){
+			oi = to + t - 1;
+			si = ts + t - 1;
+			s[si] = '\n';
+		} else {
+			s[++si] = '\n';
+		}
 		s[++si] = '\0';
 	}
 
