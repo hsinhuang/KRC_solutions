@@ -133,7 +133,7 @@ int copy(const char *from, char *to, int n){
 
 int isEmpty(const char* str){
 	if(str[0] == '\0' || (str[0] == '\n' && str[1] == '\0'))
-		return 1;
+		return TRUE;
 	else
-		return 0;
+		return FALSE;
 }
