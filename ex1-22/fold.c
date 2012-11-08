@@ -42,7 +42,7 @@ int readline(char s[], int lim){
 		++i;
 	}
 	s[i] = '\0';
-	return i;
+	return i;// '\0' not counted
 }
 
 char* fold(char* str, int n){
@@ -51,28 +51,41 @@ char* fold(char* str, int n){
 	int si = 0, oi = 0, t;
 	// si is the index of first '\0'
 	// oi is the index of first not copied element
-	while(oi < length){
-		// printf("%s\n", s);
-		t = copy(&str[oi], &s[si], n);// bias of '\0'
+	while(oi < length-1){
+		t = copy(&str[oi], &s[si], n+2);
 		int ts = si, to = oi;
 		si += t - 1;// si is the index of first '\0'
 		oi += t - 1;// oi is the index of first not copied element
-		if(s[si] == '\n')
+		if(s[si-1] == '\n')
 			continue;
 		char c;
-		while((c = s[--si]) != ' ' && c != '\t')
+		while((c = s[--si]) != ' ' && c != '\t'){
+			if(si < ts)
+				goto exception;// I can't find a better way
 			--oi;
-		--oi;
-		while((c = s[--si]) == ' ' || c == '\t')
-			--oi;
-		if(si < ts){
-			oi = to + t - 1;
-			si = ts + t - 1;
-			s[si] = '\n';
-		} else {
-			s[++si] = '\n';
 		}
+		if(si < n){
+			goto endline;// Forgive me again
+		}
+
+		--oi;
+		while((c = s[--si]) == ' ' || c == '\t'){
+			if(si < ts)
+				goto exception;
+			--oi;
+		}
+
+endline:
+		s[++si] = '\n';
 		s[++si] = '\0';
+		continue;
+
+exception:
+		si = ts + t - 1;
+		oi = to + t - 1 - 2;
+		s[si-2] = '-';
+		s[si-1] = '\n';
+		s[si] = '\0';
 	}
 
 	return s;
