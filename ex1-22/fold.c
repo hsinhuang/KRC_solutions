@@ -82,9 +82,15 @@ int copy(char *from, char *to, int n){
 	int i = 0;
 	while((to[i] = from[i]) != '\0' && i < n)
 		++i;
-	if(i == n)
-		to[i-1] = '\0';
-	return i;//'\0' is counted
+	++i;
+	if(i <= n)
+		return i;//'\0' is counted
+	if(i == n+1){
+		to[n-1] = '\0';
+		return n;//'\0' is counted
+	}
+
+	return -1;// Exception
 }
 
 int len(char *str){
