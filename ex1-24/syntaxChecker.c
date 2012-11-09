@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "stack.h"
 
+#define MAXCHAR 10000
 #define MAXLINE 1000
 #define TRUE 1
 #define FALSE 0
@@ -50,46 +51,49 @@ void elim_quote(char *str);
 struct error* bracketMatch(const char* str);
 
 int main(int argc, char const *argv[]){
-	// char line[MAXLINE];
-	// const char *LINE_COM = "//";
-	// const char *COM_S = "/*";
-	// const char *COM_C = "*/";
-	// int i, j;
-	// char *s;
+	char str[MAXCHAR];
+	int str_i = 0;
+	char line[MAXLINE];
+	const char *LINE_COM = "//";
+	const char *COM_S = "/*";
+	const char *COM_C = "*/";
+	int i, j;
+	char *s;
 
-	// while(readline(line, MAXLINE) > 0){
-	// 	if((i = find(LINE_COM, line, 0)) != -1){
-	// 		s = delete(line, i, -1);
-	// 		printf("%s\n", s);
-	// 		free((void *)s);
-	// 	} else if((i = find(COM_S, line, 0)) != -1){
-	// 		if((j = find(COM_C, line, 0)) != -1){
-	// 			s = delete(line, i, j+2);
-	// 			printf("%s\n", s);
-	// 			free((void *)s);
-	// 		} else {
-	// 			s = delete(line, i, -1);
-	// 			printf("%s\n", s);
-	// 			free((void *)s);
-	// 			while((j = find(COM_C, line, 0)) == -1)
-	// 				readline(line, MAXLINE);
-	// 			s = delete(line, 0, j+2);
-	// 			printf("%s", s);
-	// 			free((void *)s);
-	// 		}
-	// 	} else {
-	// 		printf("%s", line);
-	// 	}
-	// }
+	while(readline(line, MAXLINE) > 0){
+		if(line[0] == '\n' && line[1] == '\0')
+			break;
+		if((i = find(LINE_COM, line, 0)) != -1){
+			s = delete(line, i, -1);
+			str_i += copy(s, &str[str_i], MAXLINE) - 1;
+			free((void *)s);
+		} else if((i = find(COM_S, line, 0)) != -1){
+			if((j = find(COM_C, line, 0)) != -1){
+				s = delete(line, i, j+2);
+				str_i += copy(s, &str[str_i], MAXLINE) - 1;
+				free((void *)s);
+			} else {
+				s = delete(line, i, -1);
+				printf("%s\n", s);
+				free((void *)s);
+				while((j = find(COM_C, line, 0)) == -1)
+					readline(line, MAXLINE);
+				s = delete(line, 0, j+2);
+				str_i += copy(s, &str[str_i], MAXLINE) - 1;
+				free((void *)s);
+			}
+		} else {
+			str_i += copy(line, &str[str_i], MAXLINE) - 1;
+		}
+	}
 
-	char s[100];
-	for(;;){
-		printf(">>> ");
-		readline(s, MAXLINE);
-		printf("%s", s);
-		struct error *err = bracketMatch(s);
+	elim_quote(str);
+	struct error *err = bracketMatch(str);
+	if(err != NULL){
 		errprint(err);
 		free(err);
+	} else {
+		printf("OK\n");
 	}
 	
 	return 0;
@@ -164,8 +168,6 @@ int copy(const char *from, char *to, int n){
 }
 
 int errprint(struct error *e){
-	if(e == NULL)
-		return printf("Pass\n");
 	char* s = (e->type == NOTMATCHED) ? "Not matched" : "Redundant";
 	return printf("%s '%c' in Line %d, Column %d\n",
 					s, e->id, e->line, e->column);
@@ -242,8 +244,8 @@ struct error* bracketMatch(const char* str){
 		b = (struct bracket*)Pop(brackets);
 		goto notmatched;
 	} else {
-		err = NULL;
-		goto ret;
+		free(err);
+		return NULL;
 	}
 
 notmatched:
