@@ -61,8 +61,6 @@ int main(int argc, char const *argv[]){
 	char *s;
 
 	while(readline(line, MAXLINE) > 0){
-		if(line[0] == '\n' && line[1] == '\0')
-			break;
 		if((i = find(LINE_COM, line, 0)) != -1){
 			s = delete(line, i, -1);
 			str_i += copy(s, &str[str_i], MAXLINE) - 1;
@@ -86,8 +84,9 @@ int main(int argc, char const *argv[]){
 			str_i += copy(line, &str[str_i], MAXLINE) - 1;
 		}
 	}
-
+	printf("1: %s\n", str);
 	elim_quote(str);
+	printf("2: %s\n", str);
 	struct error *err = bracketMatch(str);
 	if(err != NULL){
 		errprint(err);
@@ -283,8 +282,13 @@ void elim_quote(char *str){
 				t = length;
 				goto excep1;
 			}
-			while(str[t-1] == '\\')
+			while(str[t-1] == '\\'){
+				int j = t-1;
+				while(str[--j] == '\\');
+				if((t - 1 - j) % 2 == 0)
+					goto excep1;
 				t = find(D_Q, str, t+1);
+			}
 excep1:		while(i <= t && i < length-1 && str[i] != '\n'){
 				str[i++] = ' ';
 			}
@@ -294,8 +298,13 @@ excep1:		while(i <= t && i < length-1 && str[i] != '\n'){
 				t = length;
 				goto excep2;
 			}
-			while(str[t-1] == '\\')
+			while(str[t-1] == '\\'){
+				int j = t-1;
+				while(str[--j] == '\\');
+				if((t - 1 - j) % 2 == 0)
+					goto excep2;
 				t = find(S_Q, str, t+1);
+			}
 excep2:		while(i <= t && i < length-1 && str[i] != '\n'){
 				str[i++] = ' ';
 			}
