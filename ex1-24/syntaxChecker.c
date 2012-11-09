@@ -5,8 +5,30 @@
 #define MAXLINE 1000
 #define TRUE 1
 #define FALSE 0
-#define MISS 'm'
+#define NOTMATCHED 'm'
 #define REDUNDANT 'r'
+
+struct error{
+	char id;
+	char type;// error type: NOTMATCHED or REDUNDANT
+	int line;// line number
+	int column;// column number
+};
+int errprint(struct error *e);
+
+struct bracket{
+	char id;
+	int line;// line number
+	int column;// column number
+};
+
+struct bracket *NewBracket(char id, int line, int column){
+	struct bracket* b = (struct bracket*)malloc(sizeof(struct bracket));
+	b->id = id;
+	b->line = line;
+	b->column = column;
+	return b;
+}
 
 int len(const char *str);
 int readline(char line[], int maxline);
@@ -23,14 +45,9 @@ int find(const char* target, const char* inwhich, int start);
 char* delete(const char* str, int start, int end);
 int copy(const char *from, char *to, int n);
 void elim_quote(char *str);
-
-struct error{
-	char id;
-	char type;// error type: MISS or REDUNDANT
-	int line;// line number
-	int column;// column number
-};
-int errprint(struct error e);
+// pointer returned by this function need to __free__
+// return when meets **one** error
+struct error* bracketMatch(const char* str);
 
 int main(int argc, char const *argv[]){
 	// char line[MAXLINE];
@@ -67,10 +84,13 @@ int main(int argc, char const *argv[]){
 
 	char s[100];
 	for(;;){
-	printf(">>> ");
-	readline(s, MAXLINE);
-	elim_quote(s);
-	printf("%s", s);}
+		printf(">>> ");
+		readline(s, MAXLINE);
+		printf("%s", s);
+		struct error *err = bracketMatch(s);
+		errprint(err);
+		free(err);
+	}
 	
 	return 0;
 }
@@ -143,16 +163,114 @@ int copy(const char *from, char *to, int n){
 	return -1;// Exception
 }
 
-int errprint(struct error e){
-	char* s = (e.type == MISS) ? "Expect" : "Redundant";
+int errprint(struct error *e){
+	if(e == NULL)
+		return printf("Pass\n");
+	char* s = (e->type == NOTMATCHED) ? "Not matched" : "Redundant";
 	return printf("%s '%c' in Line %d, Column %d\n",
-					s, e.id, e.line, e.column);
+					s, e->id, e->line, e->column);
+}
+
+struct error* bracketMatch(const char* str){
+	struct bracket *b;
+	struct stack *brackets = NewStack();
+	struct error *err = (struct error*)malloc(sizeof(struct error*));
+	err->line = 1;
+	err->column = 1;
+
+	int i = 0;
+	char c;
+	while((c = str[i++]) != '\0'){
+		switch(c){
+			case '\n':
+				err->line++;
+				err->column = 1;
+				continue;
+			case '(':
+				b = NewBracket('(', err->line, err->column);
+				Push(b, brackets);
+				break;
+			case '[':
+				b = NewBracket('[', err->line, err->column);
+				Push(b, brackets);
+				break;
+			case '{':
+				b = NewBracket('{', err->line, err->column);
+				Push(b, brackets);
+				break;
+			case ')':
+				if(isEmpty(brackets)){
+					goto redundant;
+				} else {
+					b = (struct bracket*)Pop(brackets);
+					if(b->id != '('){
+						goto notmatched;
+					} else {
+						free(b);
+					}
+				}
+				break;
+			case ']':
+				if(isEmpty(brackets)){
+					goto redundant;
+				} else {
+					b = (struct bracket*)Pop(brackets);
+					if(b->id != '['){
+						goto notmatched;
+					} else {
+						free(b);
+					}
+				}
+				break;
+			case '}':
+				if(isEmpty(brackets)){
+					goto redundant;
+				} else {
+					b = (struct bracket*)Pop(brackets);
+					if(b->id != '{'){
+						goto notmatched;
+					} else {
+						free(b);
+					}
+				}
+				break;
+		}
+		err->column++;
+	}
+
+	if(!isEmpty(brackets)){
+		b = (struct bracket*)Pop(brackets);
+		goto notmatched;
+	} else {
+		err = NULL;
+		goto ret;
+	}
+
+notmatched:
+	err->type = NOTMATCHED;
+	err->id = b->id;
+	err->line = b->line;
+	err->column = b->column;
+	free(b);
+	goto ret;
+
+redundant:
+	err->type = REDUNDANT;
+	err->id = c;
+	goto ret;
+
+ret:
+	while(!isEmpty(brackets)){
+		b = (struct bracket*)Pop(brackets);
+		free(b);
+	}
+	free(brackets);
+	return err;
 }
 
 void elim_quote(char *str){
 	const char *D_Q = "\"";
 	const char *S_Q = "\'";
-	// const char *SLASH = "\\";
 
 	const int length = len(str);
 	char c;
@@ -166,7 +284,7 @@ void elim_quote(char *str){
 			while(str[t-1] == '\\')
 				t = find(D_Q, str, t+1);
 excep1:		while(i <= t && i < length-1 && str[i] != '\n'){
-				str[i++] = 'e';
+				str[i++] = ' ';
 			}
 			i--;
 		} else if(c == '\''){
@@ -177,7 +295,7 @@ excep1:		while(i <= t && i < length-1 && str[i] != '\n'){
 			while(str[t-1] == '\\')
 				t = find(S_Q, str, t+1);
 excep2:		while(i <= t && i < length-1 && str[i] != '\n'){
-				str[i++] = 'e';
+				str[i++] = ' ';
 			}
 			i--;
 		}
