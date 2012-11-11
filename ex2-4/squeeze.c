@@ -38,7 +38,7 @@ void squeeze(char s[], char del[]){
 				}
 			}
 			if(match){
-				i += k;
+				i += k-1;
 			} else {
 				s[j++] = c;
 			}
