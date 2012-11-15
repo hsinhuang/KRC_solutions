@@ -1,4 +1,4 @@
-KRC_ex
+KRC_solutions
 ======
 
 My solutions to exercises in KRC. 
