@@ -1,7 +1,7 @@
 KRC_ex
 ======
 
-My solutions to exercises of KRC. 
+My solutions to exercises in KRC. 
 
 gcc (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
 flags: `-std=c99`
